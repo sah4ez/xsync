@@ -1,17 +1,40 @@
-threads: 1
+threads: 8
 batchSize: 100
+
+source:
+    addr: "127.0.0.1:33061"
+    user: "root"
+    password: ""
+    db: "transaction_base"
+    tls: false
+
+target:
+    addr: "127.0.0.1:33062"
+    user: "root"
+    password: ""
+    db: "transaction_base"
+    tls: false
 
 schemas:
     transaction_base:
         - table: users
           batch: 100
+          fieldId: user_id
+          latest: 0
         - table: transactions
           batch: 100
+          cleanAfter: 90h
+          fieldId: trx_id
+          latest: 0
         - table: transaction_type
           interval: 10s
+          fieldId: type_id
+          latest: 0
         - table: transaction_status
           batch: 100
-        - table: transaction_params
-          batch: 100
+          fieldId: status_id
+          latest: 0
         - table: transaction_param_type
           interval: 10s
+          fieldId: id_param_type
+          latest: 0
