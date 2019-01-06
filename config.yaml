@@ -21,20 +21,24 @@ schemas:
           batch: 100
           fieldId: user_id
           latest: 0
+          interval: 90h
         - table: transactions
-          batch: 100
-          cleanAfter: 90h
+          batch: 1000
+          cleanAfter: 1s
           fieldId: trx_id
           latest: 0
         - table: transaction_type
-          interval: 10s
+          interval: 90h
           fieldId: type_id
+          batch: 100
           latest: 0
         - table: transaction_status
+          interval: 90h
           batch: 100
           fieldId: status_id
           latest: 0
         - table: transaction_param_type
-          interval: 10s
+          interval: 90h
           fieldId: id_param_type
+          batch: 100
           latest: 0

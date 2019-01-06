@@ -25,9 +25,13 @@ func (q *Querier) Run() {
 		for _, t := range tables {
 			table := t
 			go func() {
+				interval := 1 * time.Second
+				if table.Interval > time.Duration(0) {
+					interval = table.Interval
+				}
 				for {
 					select {
-					case <-time.After(1 * time.Second):
+					case <-time.After(interval):
 						q.Pool.Schedule(
 							func() error {
 								t := table
