@@ -1,0 +1,17 @@
+threads: 1
+batchSize: 100
+
+schemas:
+    transaction_base:
+        - table: users
+          batch: 100
+        - table: transactions
+          batch: 100
+        - table: transaction_type
+          interval: 10s
+        - table: transaction_status
+          batch: 100
+        - table: transaction_params
+          batch: 100
+        - table: transaction_param_type
+          interval: 10s
