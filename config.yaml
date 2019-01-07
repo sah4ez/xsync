@@ -1,6 +1,15 @@
 threads: 8
 batchSize: 100
 
+binlog:
+    serverId: 1
+    host: "127.0.0.1"
+    port: 33061
+    user: "root"
+    password: ""
+    gtid: "e493542d-12cb-11e9-a3ac-0242ac110002"
+    position: "1-20"
+
 source:
     addr: "127.0.0.1:33061"
     user: "root"
@@ -21,7 +30,7 @@ schemas:
           batch: 0
           fieldId: user_id
           latest: 0
-          interval: 1s
+          interval: 90h
         - table: transactions
           batch: 1000
           cleanAfter: 1s

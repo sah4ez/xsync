@@ -24,7 +24,6 @@ type Querier struct {
 	Pool   *pool.Pool
 	Tables map[string][]config.Table
 	logger *zap.Logger
-	cs     *config.ConfigSQL
 }
 
 func (q *Querier) Run() {
@@ -198,13 +197,12 @@ func B2S(bs []uint8) string {
 	return string(ba)
 }
 
-func NewQuerier(src, tgt *client.Conn, pool *pool.Pool, tables map[string][]config.Table, logger *zap.Logger, cs *config.ConfigSQL) *Querier {
+func NewQuerier(src, tgt *client.Conn, pool *pool.Pool, tables map[string][]config.Table, logger *zap.Logger) *Querier {
 	return &Querier{
 		Source: src,
 		Target: tgt,
 		Pool:   pool,
 		Tables: tables,
 		logger: logger,
-		cs:     cs,
 	}
 }

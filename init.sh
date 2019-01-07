@@ -15,7 +15,6 @@ docker run -itd \
   --user=mysql \
   --server-id=1 \
   --log-bin=/var/log/mysql/mysql-bin.log \
-  --binlog_do_db=test \
   --gtid-mode=ON \
   --enforce-gtid-consistency=true
 
@@ -28,7 +27,7 @@ docker run -itd \
   mysqld \
   --datadir=/var/lib/mysql \
   --user=mysql \
-  --server-id=1 
+  --server-id=2 
 
 docker run -itd \
   -e MYSQL_ALLOW_EMPTY_PASSWORD=true \
@@ -40,8 +39,4 @@ docker run -itd \
   mysqld \
   --datadir=/var/lib/mysql \
   --user=mysql \
-  --server-id=1 \
-  --log-bin=/var/log/mysql/mysql-bin.log \
-  --binlog_do_db=test \
-  --gtid-mode=ON \
-  --enforce-gtid-consistency=true
+  --server-id=3 

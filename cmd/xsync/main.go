@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sah4ez/xsync/pkg/binlog"
 	"github.com/sah4ez/xsync/pkg/config"
 	"github.com/sah4ez/xsync/pkg/pool"
 	"github.com/sah4ez/xsync/pkg/query"
@@ -107,16 +108,7 @@ func main() {
 				p := pool.New(cfg.Threads, s)
 				defer p.Close()
 
-				cs := &config.ConfigSQL{
-					Settings: targetConn,
-					Schemas:  cfg.Schemas,
-					Tables:   make(map[string]uint64),
-				}
-				//				_, err = cs.Load()
-				//				if err != nil {
-				//					return err
-				//				}
-				q := query.NewQuerier(sourceConn, targetConn, p, cfg.Schemas, logger, cs)
+				q := query.NewQuerier(sourceConn, targetConn, p, cfg.Schemas, logger)
 				go q.Run()
 				<-s
 				fmt.Println("batch sync: ", cfg)
@@ -129,6 +121,17 @@ func main() {
 			Usage:   "synchronization through binlog",
 			Action: func(c *cli.Context) error {
 				fmt.Println("binlog sync: ", cfg)
+				b := binlog.NewBinlog(
+					cfg.Binlog.ServerID,
+					cfg.Binlog.Host,
+					cfg.Binlog.Port,
+					cfg.Binlog.User,
+					cfg.Binlog.Password,
+					cfg.Schemas,
+					cfg.Binlog.GTID,
+					cfg.Binlog.Position,
+				)
+				b.Run()
 				return nil
 			},
 		},

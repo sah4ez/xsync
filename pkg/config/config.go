@@ -9,6 +9,7 @@ type Config struct {
 	Schemas   map[string][]Table `yaml:"schemas,omitempty"`
 	Source    MySQLCredentials   `yaml:"source"`
 	Target    MySQLCredentials   `yaml:"target"`
+	Binlog    BinlogSyncer       `yaml:"binlog,omitempty"`
 }
 
 type Table struct {
@@ -26,6 +27,16 @@ type MySQLCredentials struct {
 	Password string `yaml:"password"`
 	DB       string `yaml:"db"`
 	SSL      bool   `yaml:"ssl"`
+}
+
+type BinlogSyncer struct {
+	ServerID uint32 `yaml:"serverId"`
+	Host     string `yaml:"host"`
+	Port     uint16 `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	GTID     string `yaml:"gtid"`
+	Position string `yaml:"position"`
 }
 
 type Cfg interface {
