@@ -6,11 +6,20 @@ import (
 	"strings"
 )
 
+type OrderType string
+
+var (
+	Asc  OrderType = "ASC"
+	Desc OrderType = "DESC"
+)
+
 type SelectBuilder struct {
-	Columns []string
-	Froms   []string
-	Wheres  []string
-	LimitV  uint
+	Columns  []string
+	Froms    []string
+	Wheres   []string
+	LimitV   uint
+	OrderByV OrderType
+	OrderByF []string
 }
 
 func Select() SelectBuilder {
@@ -29,6 +38,12 @@ func (s SelectBuilder) From(tabels ...string) SelectBuilder {
 
 func (s SelectBuilder) Where(cond ...string) SelectBuilder {
 	s.Wheres = append(s.Wheres, cond...)
+	return s
+}
+
+func (s SelectBuilder) OrderBy(t OrderType, cond ...string) SelectBuilder {
+	s.OrderByV = t
+	s.OrderByF = append(s.OrderByF, cond...)
 	return s
 }
 
@@ -60,6 +75,12 @@ func (s SelectBuilder) ToSql() (string, error) {
 	if len(s.Wheres) > 0 {
 		ss += " WHERE "
 		ss += strings.Join(s.Wheres, " ")
+	}
+
+	if len(s.OrderByF) > 0 {
+		ss += " ORDER BY "
+		ss += strings.Join(s.OrderByF, ",")
+		ss += " " + string(s.OrderByV)
 	}
 
 	if s.LimitV > 0 {

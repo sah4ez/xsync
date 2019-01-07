@@ -87,6 +87,8 @@ func main() {
 				if err != nil {
 					return err
 				}
+				defer sourceConn.Close()
+				sourceConn.Ping()
 
 				targetConn, err := client.Connect(
 					cfg.Target.Addr,
@@ -98,11 +100,23 @@ func main() {
 				if err != nil {
 					return err
 				}
+				defer targetConn.Close()
+				targetConn.Ping()
+
 				s := make(chan struct{})
 				p := pool.New(cfg.Threads, s)
 				defer p.Close()
 
-				q := query.NewQuerier(sourceConn, targetConn, p, cfg.Schemas)
+				cs := &config.ConfigSQL{
+					Settings: targetConn,
+					Schemas:  cfg.Schemas,
+					Tables:   make(map[string]uint64),
+				}
+				//				_, err = cs.Load()
+				//				if err != nil {
+				//					return err
+				//				}
+				q := query.NewQuerier(sourceConn, targetConn, p, cfg.Schemas, logger, cs)
 				go q.Run()
 				<-s
 				fmt.Println("batch sync: ", cfg)

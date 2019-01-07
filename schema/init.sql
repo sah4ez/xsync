@@ -5,6 +5,14 @@ COLLATE utf8_general_ci;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 SET NAMES 'utf8';
 USE transaction_base;
+CREATE TABLE xsync_settings (
+  key_id varchar(255) NOT NULL,
+  value varchar(255) DEFAULT NULL,
+  PRIMARY KEY (key_id)
+)
+ENGINE = INNODB,
+CHARACTER SET utf8,
+COLLATE utf8_general_ci;
 CREATE TABLE users (
   user_id int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   user_name varchar(50) DEFAULT NULL,

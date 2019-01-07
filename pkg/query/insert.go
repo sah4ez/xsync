@@ -55,12 +55,12 @@ func (i InsertBuilder) ToSql() (string, error) {
 		pv := []string{}
 		for _, v := range i.Values {
 			if len(v) == len(i.Columns) {
-				pv = append(pv, " ("+strings.Join(i.Columns, ",")+") ")
+				pv = append(pv, " ("+strings.Join(v, ",")+") ")
 			} else {
 				return ii, fmt.Errorf("invalid count of values %v for insert %v", v, i.Columns)
 			}
 		}
-		ii += strings.Join(pv, ",")
+		ii += " VALUES " + strings.Join(pv, ",")
 	} else {
 		return ii, fmt.Errorf("missing insert values")
 	}

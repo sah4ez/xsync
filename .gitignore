@@ -1,1 +1,3 @@
 bin/
+binlog-1/mysql-bin.*
+binlog-2/mysql-bin.*

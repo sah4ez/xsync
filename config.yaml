@@ -21,7 +21,7 @@ schemas:
           batch: 0
           fieldId: user_id
           latest: 0
-          interval: 90h
+          interval: 1s
         - table: transactions
           batch: 1000
           cleanAfter: 1s

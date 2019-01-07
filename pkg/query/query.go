@@ -9,6 +9,11 @@ import (
 	"github.com/sah4ez/xsync/pkg/config"
 	"github.com/sah4ez/xsync/pkg/pool"
 	"github.com/siddontang/go-mysql/client"
+	"go.uber.org/zap"
+)
+
+var (
+	SettingsTable = "transaction_base.xsync_settings"
 )
 
 type Querier struct {
@@ -18,6 +23,8 @@ type Querier struct {
 	Target *client.Conn
 	Pool   *pool.Pool
 	Tables map[string][]config.Table
+	logger *zap.Logger
+	cs     *config.ConfigSQL
 }
 
 func (q *Querier) Run() {
@@ -29,16 +36,54 @@ func (q *Querier) Run() {
 				if table.Interval > time.Duration(0) {
 					interval = table.Interval
 				}
+				settings := Select().
+					Column("value").
+					From(SettingsTable).
+					Where("key_id='" + schema + "." + t.Table + "'")
+				settingsStr, err := settings.ToSql()
+				if err != nil {
+					q.logger.Error(
+						"build query settings",
+						zap.String("err", err.Error()))
+					return
+				}
+
+				q.tl.Lock()
+				v, err := q.Target.Execute(settingsStr)
+				q.tl.Unlock()
+
+				var vv uint64
+
+				if v.ColumnNumber() != 1 || v.RowNumber() != 1 {
+					q.logger.Warn(
+						"build query settings",
+						zap.String("err", fmt.Sprintf("invalid cound column %d or rows %d for settings %s",
+							v.ColumnNumber(), v.RowNumber(), schema+"."+t.Table)))
+				} else {
+					vv, err = v.GetUint(0, 0)
+					if err != nil {
+						q.logger.Error(
+							"build query settings",
+							zap.String("err", err.Error()))
+						return
+					}
+				}
+
 				for {
 					select {
 					case <-time.After(interval):
 						task := func() error {
 							t := table
-							fmt.Println(">>>>>", schema, t)
+							q.logger.Info(
+								"start sync",
+								zap.String("shcema", schema),
+								zap.String("table", t.Table))
+
 							selectStr := Select().
 								Column("*").
-								From(schema + "." + t.Table).
-								Where(t.FieldID + ">" + t.Latest)
+								From(schema+"."+t.Table).
+								Where(t.FieldID+">"+fmt.Sprintf("%d", vv)).
+								OrderBy(Desc, t.FieldID)
 
 							if t.Batch != "0" {
 								selectStr = selectStr.Limit(t.Batch)
@@ -57,6 +102,7 @@ func (q *Querier) Run() {
 							}
 
 							if v != nil && v.Resultset != nil {
+								maxId, _ := v.GetUint(0, 0)
 
 								insert := Insert().Table(schema + "." + t.Table)
 
@@ -68,6 +114,9 @@ func (q *Querier) Run() {
 								insert = insert.Column(fields...)
 
 								if len(v.Resultset.RowDatas) == 0 {
+									q.logger.Warn("row datas is empty",
+										zap.String("query", str),
+									)
 									return nil
 								}
 								for _, vvv := range v.Resultset.RowDatas {
@@ -96,7 +145,7 @@ func (q *Querier) Run() {
 								var onDuplicate []string
 								for _, field := range fields {
 									if field != t.FieldID {
-										onDuplicate = append(fields, field)
+										onDuplicate = append(onDuplicate, field)
 									}
 								}
 								insert = insert.OnDuplicateKeyUpdate(onDuplicate...)
@@ -107,10 +156,28 @@ func (q *Querier) Run() {
 								}
 
 								q.tl.Lock()
-								_, err = q.Target.Execute(insertStr)
-								q.tl.Lock()
+								v, err = q.Target.Execute(insertStr)
+								q.tl.Unlock()
 								if err != nil {
 									return fmt.Errorf("insert query: %s has error: %s", insertStr, err.Error())
+								}
+
+								insertSetting := Insert().
+									Table(SettingsTable).
+									Column("key_id", "value").
+									Value("'"+schema+"."+t.Table+"'", fmt.Sprintf("'%d'", maxId)).
+									OnDuplicateKeyUpdate("value")
+
+								insertStr, err = insertSetting.ToSql()
+								if err != nil {
+									return fmt.Errorf("build insert setting query has error: %s", err.Error())
+								}
+
+								q.tl.Lock()
+								_, err = q.Target.Execute(insertStr)
+								q.tl.Unlock()
+								if err != nil {
+									return fmt.Errorf("build insert setting query has error: %s", err.Error())
 								}
 							}
 							return nil
@@ -131,11 +198,13 @@ func B2S(bs []uint8) string {
 	return string(ba)
 }
 
-func NewQuerier(src, tgt *client.Conn, pool *pool.Pool, tables map[string][]config.Table) *Querier {
+func NewQuerier(src, tgt *client.Conn, pool *pool.Pool, tables map[string][]config.Table, logger *zap.Logger, cs *config.ConfigSQL) *Querier {
 	return &Querier{
 		Source: src,
 		Target: tgt,
 		Pool:   pool,
 		Tables: tables,
+		logger: logger,
+		cs:     cs,
 	}
 }
