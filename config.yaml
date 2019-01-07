@@ -18,7 +18,7 @@ target:
 schemas:
     transaction_base:
         - table: users
-          batch: 100
+          batch: 0
           fieldId: user_id
           latest: 0
           interval: 90h
@@ -30,15 +30,15 @@ schemas:
         - table: transaction_type
           interval: 90h
           fieldId: type_id
-          batch: 100
+          batch: 0
           latest: 0
         - table: transaction_status
           interval: 90h
-          batch: 100
+          batch: 0
           fieldId: status_id
           latest: 0
         - table: transaction_param_type
           interval: 90h
           fieldId: id_param_type
-          batch: 100
+          batch: 0
           latest: 0
