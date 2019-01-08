@@ -120,8 +120,20 @@ func main() {
 			Aliases: []string{"bl"},
 			Usage:   "synchronization through binlog",
 			Action: func(c *cli.Context) error {
-				fmt.Println("binlog sync: ", cfg)
+				targetConn, err := client.Connect(
+					cfg.Target.Addr,
+					cfg.Target.User,
+					cfg.Target.Password,
+					cfg.Target.DB,
+				)
+				if err != nil {
+					return err
+				}
+				defer targetConn.Close()
+				targetConn.Ping()
+
 				b := binlog.NewBinlog(
+					targetConn,
 					cfg.Binlog.ServerID,
 					cfg.Binlog.Host,
 					cfg.Binlog.Port,
@@ -130,6 +142,7 @@ func main() {
 					cfg.Schemas,
 					cfg.Binlog.GTID,
 					cfg.Binlog.Position,
+					logger,
 				)
 				b.Run()
 				return nil

@@ -1,4 +1,4 @@
-package query
+package builder
 
 import (
 	"fmt"
@@ -54,7 +54,7 @@ func (i InsertBuilder) ToSql() (string, error) {
 	if len(i.Values) > 0 {
 		pv := []string{}
 		for _, v := range i.Values {
-			if len(v) == len(i.Columns) {
+			if len(i.Columns) == 0 || len(v) == len(i.Columns) {
 				pv = append(pv, " ("+strings.Join(v, ",")+") ")
 			} else {
 				return ii, fmt.Errorf("invalid count of values %v for insert %v", v, i.Columns)

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sah4ez/xsync/pkg/builder"
 	"github.com/sah4ez/xsync/pkg/config"
 	"github.com/sah4ez/xsync/pkg/pool"
 	"github.com/siddontang/go-mysql/client"
@@ -35,7 +36,7 @@ func (q *Querier) Run() {
 				if table.Interval > time.Duration(0) {
 					interval = table.Interval
 				}
-				settings := Select().
+				settings := builder.Select().
 					Column("value").
 					From(SettingsTable).
 					Where("key_id='" + schema + "." + t.Table + "'")
@@ -78,11 +79,11 @@ func (q *Querier) Run() {
 								zap.String("shcema", schema),
 								zap.String("table", t.Table))
 
-							selectStr := Select().
+							selectStr := builder.Select().
 								Column("*").
 								From(schema+"."+t.Table).
 								Where(t.FieldID+">"+fmt.Sprintf("%d", vv)).
-								OrderBy(Desc, t.FieldID)
+								OrderBy(builder.Desc, t.FieldID)
 
 							if t.Batch != "0" {
 								selectStr = selectStr.Limit(t.Batch)
@@ -103,7 +104,7 @@ func (q *Querier) Run() {
 							if v != nil && v.Resultset != nil {
 								maxId, _ := v.GetUint(0, 0)
 
-								insert := Insert().Table(schema + "." + t.Table)
+								insert := builder.Insert().Table(schema + "." + t.Table)
 
 								fields := make([]string, len(v.Resultset.FieldNames))
 								for field, i := range v.Resultset.FieldNames {
@@ -161,7 +162,7 @@ func (q *Querier) Run() {
 									return fmt.Errorf("insert query: %s has error: %s", insertStr, err.Error())
 								}
 
-								insertSetting := Insert().
+								insertSetting := builder.Insert().
 									Table(SettingsTable).
 									Column("key_id", "value").
 									Value("'"+schema+"."+t.Table+"'", fmt.Sprintf("'%d'", maxId)).

@@ -12,6 +12,8 @@ type Config struct {
 	Binlog    BinlogSyncer       `yaml:"binlog,omitempty"`
 }
 
+var NilTable = Table{}
+
 type Table struct {
 	Table      string        `yaml:"table"`
 	Batch      string        `yaml:"batch,omitempty"`
