@@ -5,7 +5,7 @@ LDFLAGS=-ldflags "-extldflags "-static" -X main.Revision=$(GIT_BRANCH) -X main.V
 
 
 build: clean
-	GO111MODULE=on go build $(LDFLAGS) -o ./bin/${APP_NAME} ./cmd/xsync/
+	CGO_ENABLED=0 GO111MODULE=on go build $(LDFLAGS) -a -o ./bin/${APP_NAME} ./cmd/xsync/
 
 clean:
 	rm -rf ./bin/*

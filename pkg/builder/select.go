@@ -31,8 +31,8 @@ func (s SelectBuilder) Column(columns ...string) SelectBuilder {
 	return s
 }
 
-func (s SelectBuilder) From(tabels ...string) SelectBuilder {
-	s.Froms = append(s.Froms, tabels...)
+func (s SelectBuilder) From(tables ...string) SelectBuilder {
+	s.Froms = append(s.Froms, tables...)
 	return s
 }
 

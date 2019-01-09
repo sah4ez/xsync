@@ -3,6 +3,7 @@ package binlog
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/sah4ez/xsync/pkg/builder"
@@ -28,7 +29,10 @@ func (b *Binlog) Run() {
 	gtid, _ := mysql.ParseGTIDSet("mysql", b.gtid+":"+b.position)
 	streamer, _ := syncer.StartSyncGTID(gtid)
 	for {
-		ev, _ := streamer.GetEvent(context.Background())
+		ev, err := streamer.GetEvent(context.Background())
+		if err != nil {
+			fmt.Println("<<<<", err.Error())
+		}
 		if e, ok := ev.Event.(*replication.RowsEvent); ok {
 			cur := config.Table{}
 
@@ -66,6 +70,11 @@ func (b *Binlog) Run() {
 				for _, row := range e.Rows {
 					var strRow []string
 					for _, i := range row {
+						if i == nil {
+							strRow = append(strRow, fmt.Sprintf("%v", "NULL"))
+							continue
+						}
+
 						if str, ok := i.(string); ok {
 							strRow = append(strRow, fmt.Sprintf("'%v'", str))
 						} else {
@@ -97,7 +106,6 @@ func (b *Binlog) Run() {
 				}
 				b.logger.Info("successful insert query",
 					zap.String("query", insertStr))
-
 			case replication.UPDATE_ROWS_EVENTv2:
 				if len(e.Rows) != 2 {
 					b.logger.Error("invalid cound rows for update",
@@ -137,7 +145,7 @@ func (b *Binlog) Run() {
 
 				updateStr, err := update.ToSql()
 				if err != nil {
-					b.logger.Error("build insert query",
+					b.logger.Error("build update query",
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
@@ -156,18 +164,71 @@ func (b *Binlog) Run() {
 					zap.String("query", updateStr))
 
 			case replication.DELETE_ROWS_EVENTv2:
+				b.logger.Debug("delete bin log event",
+					//	zap.String("query", updateStr),
+					zap.String("binlog", fmt.Sprintf("%+v", e)),
+				//	zap.String("err", err.Error()),
+				)
+				if len(e.Rows) == 0 {
+					continue
+				}
+
+				strRows := []string{}
+
+				for _, row := range e.Rows {
+					for _, i := range row {
+						if str, ok := i.(string); ok {
+							strRows = append(strRows, fmt.Sprintf("'%v'", str))
+						} else {
+							strRows = append(strRows, fmt.Sprintf("%v", i))
+						}
+					}
+				}
+
+				wheres := []string{}
+				for i, c := range columns {
+					wheres = append(wheres, c+"="+strRows[i])
+				}
+				del := builder.Delete().
+					Table(fullTable).
+					Where(strings.Join(wheres, " AND "))
+
+				delStr, err := del.ToSql()
+				if err != nil {
+					b.logger.Error("build delete query",
+						zap.String("binlog", fmt.Sprintf("%+v", e)),
+						zap.String("err", err.Error()),
+					)
+					continue
+				}
+				_, err = b.Target.Execute(delStr)
+				if err != nil {
+					b.logger.Error("execute delete query",
+						zap.String("query", delStr),
+						zap.String("binlog", fmt.Sprintf("%+v", e)),
+						zap.String("err", err.Error()),
+					)
+					continue
+				}
+				b.logger.Info("successful delete query",
+					zap.String("query", delStr))
+
 			default:
 				b.logger.Debug("unsupported type", zap.String("event_type", string(ev.Header.EventType)))
 			}
 		}
 
-		//fmt.Printf(">>> %s\n", ev.Header.EventType)
+		fmt.Printf("=========================================\n")
+		fmt.Printf(">>> %s\n", ev.Header.EventType)
+		fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
+		fmt.Printf(">>>>> %#v\n", ev)
 		//if e, ok := ev.Event.(*replication.RowsEvent); ok {
-		//	fmt.Printf(">>> %s.", B2S(e.Table.Schema))
+		//	fmt.Printf(">>>> %s.", B2S(e.Table.Schema))
 		//	fmt.Printf("%s\n", B2S(e.Table.Table))
-		//	fmt.Printf(">>> %#v\n", e.Table)
-		//	fmt.Printf(">>> %#v\n", e.Rows)
+		//	fmt.Printf(">>>>> %#v\n", e.Table)
+		//	fmt.Printf(">>>>>> %#v\n", e.Rows)
 		//}
+		ev.Dump(os.Stdout)
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 type InsertBuilder struct {
-	Tabels      string
+	Tables      string
 	Columns     []string
 	Values      [][]string
 	OnDuplicate []string
@@ -17,7 +17,7 @@ func Insert() InsertBuilder {
 }
 
 func (i InsertBuilder) Table(table string) InsertBuilder {
-	i.Tabels = table
+	i.Tables = table
 	return i
 }
 
@@ -42,11 +42,11 @@ func (i InsertBuilder) OnDuplicateKeyUpdate(columns ...string) InsertBuilder {
 
 func (i InsertBuilder) ToSql() (string, error) {
 	ii := "INSERT INTO "
-	if i.Tabels == "" {
+	if i.Tables == "" {
 		return ii, fmt.Errorf("missing insert table value")
 	}
 
-	ii += i.Tabels
+	ii += i.Tables
 	if len(i.Columns) != 0 {
 		ii += " (" + strings.Join(i.Columns, ",") + ") "
 	}

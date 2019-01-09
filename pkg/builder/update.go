@@ -6,7 +6,7 @@ import (
 )
 
 type UpdateBuilder struct {
-	Tabels  string
+	Tables  string
 	Columns []string
 	Values  []string
 	Wheres  []string
@@ -17,7 +17,7 @@ func Update() UpdateBuilder {
 }
 
 func (b UpdateBuilder) Table(table string) UpdateBuilder {
-	b.Tabels = table
+	b.Tables = table
 	return b
 }
 
@@ -38,11 +38,11 @@ func (b UpdateBuilder) Value(vals ...string) UpdateBuilder {
 
 func (b UpdateBuilder) ToSql() (string, error) {
 	u := "UPDATE "
-	if b.Tabels == "" {
-		return u, fmt.Errorf("missing insert table value")
+	if b.Tables == "" {
+		return u, fmt.Errorf("missing update table value")
 	}
 
-	u += b.Tabels + " SET "
+	u += b.Tables + " SET "
 
 	sets := []string{}
 	if len(b.Columns) != len(b.Values) {
