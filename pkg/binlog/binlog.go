@@ -3,7 +3,6 @@ package binlog
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/sah4ez/xsync/pkg/builder"
@@ -31,7 +30,12 @@ func (b *Binlog) Run() {
 	for {
 		ev, err := streamer.GetEvent(context.Background())
 		if err != nil {
-			fmt.Println("<<<<", err.Error())
+			b.logger.Error("Get event ",
+				zap.String("schema", schema),
+				zap.String("table", table),
+				zap.String("err", err.Error()),
+			)
+			continue
 		}
 		if e, ok := ev.Event.(*replication.RowsEvent); ok {
 			cur := config.Table{}
@@ -56,6 +60,8 @@ func (b *Binlog) Run() {
 			columns, err := b.LoadColumnsForTable(schema, table)
 
 			switch ev.Header.EventType {
+			// https://github.com/siddontang/go-mysql/issues/354
+			// missed the second event for transaction/commit query
 			case replication.WRITE_ROWS_EVENTv2:
 				if err != nil {
 					b.logger.Error("execute insert query",
@@ -218,17 +224,12 @@ func (b *Binlog) Run() {
 			}
 		}
 
-		fmt.Printf("=========================================\n")
-		fmt.Printf(">>> %s\n", ev.Header.EventType)
-		fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
-		fmt.Printf(">>>>> %#v\n", ev)
-		//if e, ok := ev.Event.(*replication.RowsEvent); ok {
-		//	fmt.Printf(">>>> %s.", B2S(e.Table.Schema))
-		//	fmt.Printf("%s\n", B2S(e.Table.Table))
-		//	fmt.Printf(">>>>> %#v\n", e.Table)
-		//	fmt.Printf(">>>>>> %#v\n", e.Rows)
-		//}
-		ev.Dump(os.Stdout)
+		// Debug
+		// fmt.Printf("=========================================\n")
+		// fmt.Printf(">>> %s\n", ev.Header.EventType)
+		// fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
+		// fmt.Printf(">>>>> %#v\n", ev)
+		// ev.Dump(os.Stdout)
 	}
 }
 
