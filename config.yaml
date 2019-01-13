@@ -8,7 +8,7 @@ binlog:
     user: "root"
     password: ""
     gtid: "e5a93cbc-1707-11e9-9a21-0242ac110002"
-    position: "1-26"
+    position: "1-33"
 
 source:
     addr: "127.0.0.1:33061"

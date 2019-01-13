@@ -39,7 +39,32 @@ func (b *Binlog) Run() {
 		// fmt.Printf(">>> %s\n", ev.Header.EventType)
 		// fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
 		// fmt.Printf(">>>>> %#v\n", ev)
-		// ev.Dump(os.Stdout)
+		//ev.Dump(os.Stdout)
+		switch ev.Header.EventType {
+		case replication.GTID_EVENT:
+			b.logger.Debug("start transaction")
+			_, err = b.Target.Execute("START TRANSACTION;")
+			if err != nil {
+				b.logger.Error("start transaction",
+					zap.String("binlog", fmt.Sprintf("%+v", ev)),
+					zap.String("err", err.Error()),
+				)
+				b.Target.Execute("ROLLBACK;")
+				continue
+			}
+		case replication.XID_EVENT:
+			b.logger.Debug("commit")
+			_, err = b.Target.Execute("COMMIT;")
+			if err != nil {
+				b.logger.Error("commit",
+					zap.String("binlog", fmt.Sprintf("%+v", ev)),
+					zap.String("err", err.Error()),
+				)
+				b.Target.Execute("ROLLBACK;")
+				continue
+			}
+		}
+
 		if e, ok := ev.Event.(*replication.RowsEvent); ok {
 			cur := config.Table{}
 
@@ -76,6 +101,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				insert := builder.Insert().
@@ -103,6 +129,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 
@@ -116,6 +143,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				b.logger.Info("successful insert query",
@@ -125,6 +153,7 @@ func (b *Binlog) Run() {
 					b.logger.Error("invalid cound rows for update",
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 
@@ -163,6 +192,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				_, err = b.Target.Execute(updateStr)
@@ -172,6 +202,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				b.logger.Info("successful update query",
@@ -213,6 +244,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				_, err = b.Target.Execute(delStr)
@@ -222,6 +254,7 @@ func (b *Binlog) Run() {
 						zap.String("binlog", fmt.Sprintf("%+v", e)),
 						zap.String("err", err.Error()),
 					)
+					b.Target.Execute("ROLLBACK;")
 					continue
 				}
 				b.logger.Info("successful delete query",
