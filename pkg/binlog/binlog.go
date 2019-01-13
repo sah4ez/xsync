@@ -31,12 +31,15 @@ func (b *Binlog) Run() {
 		ev, err := streamer.GetEvent(context.Background())
 		if err != nil {
 			b.logger.Error("Get event ",
-				zap.String("schema", schema),
-				zap.String("table", table),
 				zap.String("err", err.Error()),
 			)
 			continue
 		}
+		// Debug
+		// fmt.Printf(">>> %s\n", ev.Header.EventType)
+		// fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
+		// fmt.Printf(">>>>> %#v\n", ev)
+		// ev.Dump(os.Stdout)
 		if e, ok := ev.Event.(*replication.RowsEvent); ok {
 			cur := config.Table{}
 
@@ -50,7 +53,7 @@ func (b *Binlog) Run() {
 				}
 			}
 			if cur == config.NilTable {
-				b.logger.Debug("missed",
+				b.logger.Error("missed",
 					zap.String("schema", schema),
 					zap.String("table", table))
 				continue
@@ -58,10 +61,15 @@ func (b *Binlog) Run() {
 
 			fullTable := schema + "." + table
 			columns, err := b.LoadColumnsForTable(schema, table)
+			if err != nil {
+				b.logger.Error("load columns for table",
+					zap.String("binlog", fmt.Sprintf("%+v", e)),
+					zap.String("err", err.Error()),
+				)
+				continue
+			}
 
 			switch ev.Header.EventType {
-			// https://github.com/siddontang/go-mysql/issues/354
-			// missed the second event for transaction/commit query
 			case replication.WRITE_ROWS_EVENTv2:
 				if err != nil {
 					b.logger.Error("execute insert query",
@@ -223,13 +231,6 @@ func (b *Binlog) Run() {
 				b.logger.Debug("unsupported type", zap.String("event_type", string(ev.Header.EventType)))
 			}
 		}
-
-		// Debug
-		// fmt.Printf("=========================================\n")
-		// fmt.Printf(">>> %s\n", ev.Header.EventType)
-		// fmt.Printf(">>>> %#v\n", B2S(ev.RawData))
-		// fmt.Printf(">>>>> %#v\n", ev)
-		// ev.Dump(os.Stdout)
 	}
 }
 

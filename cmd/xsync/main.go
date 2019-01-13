@@ -29,7 +29,7 @@ func init() {
 }
 
 func main() {
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(fmt.Sprintf("couldn't create logger %s", err.Error()))
 	}

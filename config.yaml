@@ -7,8 +7,8 @@ binlog:
     port: 33061
     user: "root"
     password: ""
-    gtid: "e493542d-12cb-11e9-a3ac-0242ac110002"
-    position: "1-32"
+    gtid: "e5a93cbc-1707-11e9-9a21-0242ac110002"
+    position: "1-26"
 
 source:
     addr: "127.0.0.1:33061"
@@ -36,6 +36,11 @@ schemas:
           cleanAfter: 1s
           fieldId: trx_id
           latest: 0
+        - table: transaction_params
+          batch: 1000
+          cleanAfter: 1s
+          fieldId: id_tansaction
+          latest: 0
         - table: transaction_type
           interval: 90h
           fieldId: type_id
@@ -46,7 +51,7 @@ schemas:
           batch: 0
           fieldId: status_id
           latest: 0
-        - table: transaction_param_type
+        - table: transaction_param_types
           interval: 90h
           fieldId: id_param_type
           batch: 0
