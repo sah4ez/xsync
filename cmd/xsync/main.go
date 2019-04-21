@@ -6,11 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sah4ez/xsync/pkg/binlog"
 	"github.com/sah4ez/xsync/pkg/config"
-	"github.com/sah4ez/xsync/pkg/pool"
-	"github.com/sah4ez/xsync/pkg/query"
-	"github.com/siddontang/go-mysql/client"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 )
@@ -66,88 +62,8 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{
-		{
-			Name:    "batching",
-			Aliases: []string{"b"},
-			Usage:   "batching synchronization through sql queries",
-			Action: func(c *cli.Context) error {
-				isSSL := func(val bool) func(c *client.Conn) {
-					if val {
-						return func(c *client.Conn) { c.UseSSL(true) }
-					}
-					return func(c *client.Conn) {}
-				}
-
-				sourceConn, err := client.Connect(
-					cfg.Source.Addr,
-					cfg.Source.User,
-					cfg.Source.Password,
-					cfg.Source.DB,
-					isSSL(cfg.Source.SSL),
-				)
-				if err != nil {
-					return err
-				}
-				defer sourceConn.Close()
-				sourceConn.Ping()
-
-				targetConn, err := client.Connect(
-					cfg.Target.Addr,
-					cfg.Target.User,
-					cfg.Target.Password,
-					cfg.Target.DB,
-					isSSL(cfg.Target.SSL),
-				)
-				if err != nil {
-					return err
-				}
-				defer targetConn.Close()
-				targetConn.Ping()
-
-				s := make(chan struct{})
-				p := pool.New(cfg.Threads, s)
-				defer p.Close()
-
-				q := query.NewQuerier(sourceConn, targetConn, p, cfg.Schemas, logger)
-				go q.Run()
-				<-s
-				fmt.Println("batch sync: ", cfg)
-				return nil
-			},
-		},
-		{
-			Name:    "binlog",
-			Aliases: []string{"bl"},
-			Usage:   "synchronization through binlog",
-			Action: func(c *cli.Context) error {
-				targetConn, err := client.Connect(
-					cfg.Target.Addr,
-					cfg.Target.User,
-					cfg.Target.Password,
-					cfg.Target.DB,
-				)
-				if err != nil {
-					return err
-				}
-				defer targetConn.Close()
-				targetConn.Ping()
-
-				b := binlog.NewBinlog(
-					targetConn,
-					cfg.Binlog.ServerID,
-					cfg.Binlog.Host,
-					cfg.Binlog.Port,
-					cfg.Binlog.User,
-					cfg.Binlog.Password,
-					cfg.Schemas,
-					cfg.Binlog.GTID,
-					cfg.Binlog.Position,
-					logger,
-				)
-				b.Run()
-				return nil
-			},
-		},
+		Batching(cfg, logger),
+		Binlog(cfg, logger),
 		Publisher(cfg, logger),
 		Subscriber(cfg, logger),
 	}
