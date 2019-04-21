@@ -3,7 +3,7 @@ batchSize: 100
 
 binlog:
     serverId: 1
-    host: "127.0.0.1"
+    host: "192.168.0.26"
     port: 33061
     user: "root"
     password: ""
@@ -11,21 +11,21 @@ binlog:
     position: "1-33"
 
 source:
-    addr: "127.0.0.1:33061"
+    addr: "192.168.0.26:33061"
     user: "root"
     password: ""
     db: "transaction_base"
     tls: false
 
 target:
-    addr: "127.0.0.1:33062"
+    addr: "192.168.0.26:33062"
     user: "root"
     password: ""
     db: "transaction_base"
     tls: false
 
 kafka:
-    addr: "127.0.0.1:9092"
+    addr: "192.168.0.26:9092"
     topic: "transaction_base"
     partition: 0
     maxWait: 100ms

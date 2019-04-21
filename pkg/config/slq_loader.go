@@ -24,9 +24,9 @@ func (cs *ConfigSQL) Load() (*Config, error) {
 	for schema, table := range cs.Schemas {
 		for _, t := range table {
 			q := fmt.Sprintf(getSettings, SettingsTable, schema+"."+t.Table)
-			fmt.Println(">>>", schema, t, q)
+			//fmt.Println(">>>", schema, t, q)
 			v, err := cs.Settings.Execute(q)
-			fmt.Println(">>>>>", schema, t, q, err.Error())
+			//fmt.Println(">>>>>", schema, t, q, err.Error())
 			if err != nil {
 				return nil, err
 			}

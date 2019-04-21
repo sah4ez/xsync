@@ -64,6 +64,8 @@ func main() {
 	app.Commands = []cli.Command{
 		Batching(cfg, logger),
 		Binlog(cfg, logger),
+		Publisher(cfg, logger),
+		Subscriber(cfg, logger),
 	}
 
 	err = app.Run(os.Args)
