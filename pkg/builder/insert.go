@@ -1,15 +1,17 @@
 package builder
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"strings"
 )
 
 type InsertBuilder struct {
-	Tables      string
-	Columns     []string
-	Values      [][]string
-	OnDuplicate []string
+	Tables      string     `json:"tables"`
+	Columns     []string   `json:"columns"`
+	Values      [][]string `json:"values"`
+	OnDuplicate []string   `json:"on_duplicate"`
 }
 
 func Insert() InsertBuilder {
@@ -38,6 +40,19 @@ func (i InsertBuilder) OnDuplicateKeyUpdate(columns ...string) InsertBuilder {
 		i.OnDuplicate = append(i.OnDuplicate, fmt.Sprintf("%s=VALUES(%s)", c, c))
 	}
 	return i
+}
+
+func (b InsertBuilder) MarshallBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(b)
+	return buf.Bytes(), nil
+}
+
+func (b *InsertBuilder) UnmarshallBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	return dec.Decode(b)
 }
 
 func (i InsertBuilder) ToSql() (string, error) {

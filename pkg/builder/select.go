@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,12 +16,12 @@ var (
 )
 
 type SelectBuilder struct {
-	Columns  []string
-	Froms    []string
-	Wheres   []string
-	LimitV   uint
-	OrderByV OrderType
-	OrderByF []string
+	Columns  []string  `json:"columns"`
+	Froms    []string  `json:"froms"`
+	Wheres   []string  `json:"wheres"`
+	LimitV   uint      `json:"limit_v"`
+	OrderByV OrderType `json:"order_by_v"`
+	OrderByF []string  `json:"order_by_f"`
 }
 
 func Select() SelectBuilder {
@@ -55,6 +57,19 @@ func (s SelectBuilder) Limit(limit string) SelectBuilder {
 		s.LimitV = uint(v)
 	}
 	return s
+}
+
+func (b SelectBuilder) MarshallBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(b)
+	return buf.Bytes(), nil
+}
+
+func (b *SelectBuilder) UnmarshallBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	return dec.Decode(b)
 }
 
 func (s SelectBuilder) ToSql() (string, error) {

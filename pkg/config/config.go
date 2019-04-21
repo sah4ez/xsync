@@ -10,6 +10,18 @@ type Config struct {
 	Source    MySQLCredentials   `yaml:"source"`
 	Target    MySQLCredentials   `yaml:"target"`
 	Binlog    BinlogSyncer       `yaml:"binlog,omitempty"`
+	Kafka     Kafka              `yaml:"kafka,omitempty"`
+}
+
+type Kafka struct {
+	Addr           string        `yaml:"addr"`
+	Topic          string        `yaml:"topic"`
+	Partition      int           `yaml:"partition"`
+	MaxWait        time.Duration `yaml:"maxWait"`
+	MinBytes       int           `yaml:"minBytes"`
+	MaxBytes       int           `yaml:"maxBytes"`
+	Offset         int64         `yaml:"offset"`
+	CommitInterval time.Duration `yaml:"commitInterval"`
 }
 
 var NilTable = Table{}

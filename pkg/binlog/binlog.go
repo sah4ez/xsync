@@ -96,14 +96,6 @@ func (b *Binlog) Run() {
 
 			switch ev.Header.EventType {
 			case replication.WRITE_ROWS_EVENTv2:
-				if err != nil {
-					b.logger.Error("execute insert query",
-						zap.String("binlog", fmt.Sprintf("%+v", e)),
-						zap.String("err", err.Error()),
-					)
-					b.Target.Execute("ROLLBACK;")
-					continue
-				}
 				insert := builder.Insert().
 					Table(fullTable).
 					Column(columns...)
