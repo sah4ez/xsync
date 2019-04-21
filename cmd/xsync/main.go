@@ -132,19 +132,6 @@ func main() {
 				defer targetConn.Close()
 				targetConn.Ping()
 
-				//connParams := &sqldb.ConnParams{
-				//	Host:  cfg.Binlog.Host,
-				//	Port:  int(cfg.Binlog.Port),
-				//	Uname: cfg.Binlog.User,
-				//	Pass:  cfg.Binlog.Password,
-				//}
-
-				//				conn, err := mysql.Connect(context.Background(), &connParams)
-				//				if err != nil {
-				//					fmt.Println(err.Error())
-				//					os.Exit(1)
-				//				}
-				//
 				b := binlog.NewBinlog(
 					targetConn,
 					cfg.Binlog.ServerID,
@@ -158,33 +145,11 @@ func main() {
 					logger,
 				)
 				b.Run()
-				//b := binlog.NewBinlogVitess(
-				//	conn,
-				//	cfg.Binlog.ServerID,
-				//	cfg.Binlog.Host,
-				//	cfg.Binlog.Port,
-				//	cfg.Binlog.User,
-				//	cfg.Binlog.Password,
-				//	cfg.Schemas,
-				//	cfg.Binlog.GTID,
-				//	cfg.Binlog.Position,
-				//	logger,
-				//)
-				//bp, err := binlogplayer.NewBinlogPlayerTables(
-				//	binlogplayer.NewDbClient(connParams),
-				//	nil,
-				//	[]string{"users"},
-				//	1,
-				//	strings.Split(cfg.Binlog.Position, "-")[0],
-				//	strings.Split(cfg.Binlog.Position, "-")[1],
-				//	binlogplayer.NewStats())
-				//if err != nil {
-				//	return err
-				//}
-				//return bp.ApplyBinlogEvents(context.Background())
 				return nil
 			},
 		},
+		Publisher(cfg, logger),
+		Subscriber(cfg, logger),
 	}
 
 	err = app.Run(os.Args)
