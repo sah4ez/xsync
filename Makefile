@@ -1,6 +1,6 @@
 APP_NAME=xsync
 GIT_BRANCH?=$(shell git rev-parse --verify HEAD)
-VERSION=1.1.0
+VERSION=1.2.0
 LDFLAGS=-ldflags "-extldflags "-static" -X main.Revision=$(GIT_BRANCH) -X main.Version=$(VERSION)"
 
 
