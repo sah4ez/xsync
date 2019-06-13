@@ -30,6 +30,13 @@ func (b *BinlogReader) Run() {
 			)
 			continue
 		}
+		b.logger.Info("Get event",
+			zap.String("key", string(m.Key)),
+			zap.String("topic", m.Topic),
+			zap.Int64("offset", m.Offset),
+			zap.Int("partition", m.Partition),
+			zap.Time("time", m.Time),
+		)
 		data := m.Value
 		cmd := CommandSQL(string(m.Key))
 		switch cmd {

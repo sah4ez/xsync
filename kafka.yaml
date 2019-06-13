@@ -8,7 +8,7 @@ binlog:
     user: "root"
     password: ""
     gtid: "e5a93cbc-1707-11e9-9a21-0242ac110002"
-    position: "1-33"
+    position: "35"
 
 source:
     addr: "192.168.0.26:33061"
@@ -31,7 +31,7 @@ kafka:
     maxWait: 100ms
     minBytes: 10240 #10kb
     maxBytes: 10485760 #10mb
-    offset: 0
+    offset: 170
     commitInterval: 1s
 
 schemas:
